@@ -1,0 +1,25 @@
+# Dados (não versionar: tamanho grande e licença do dataset)
+data/
+*.zip
+*.csv
+!reports/*.csv
+
+# Segredos
+.env
+*.env
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Editores e sistema
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Power BI (arquivos temporários)
+*.pbix.tmp
+~$*

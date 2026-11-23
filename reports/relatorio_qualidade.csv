@@ -1,0 +1,66 @@
+﻿tabela,verificacao,ocorrencias,acao
+customers,Linhas totalmente duplicadas,0,removidas
+customers,Chave duplicada (customer_id),0,mantido o primeiro registro
+customers,"Chave nula (customer_id, customer_unique_id)",0,removidas
+customers,Nomes de cidade fora do padrão (acento/caixa/símbolos),0,"padronizados (minúsculas, sem acento)"
+customers,UF inválida,0,convertida para nulo
+sellers,Linhas totalmente duplicadas,0,removidas
+sellers,Chave duplicada (seller_id),0,mantido o primeiro registro
+sellers,Chave nula (seller_id),0,removidas
+sellers,Nomes de cidade fora do padrão (acento/caixa/símbolos),25,"padronizados (minúsculas, sem acento)"
+sellers,UF inválida,0,convertida para nulo
+geolocation,Nomes de cidade fora do padrão (acento/caixa/símbolos),73454,"padronizados (minúsculas, sem acento)"
+geolocation,UF inválida,0,convertida para nulo
+geolocation,Linhas totalmente duplicadas,279668,removidas
+geolocation,Coordenadas fora do Brasil,33,removidas
+geolocation,Múltiplos pontos por CEP,701452,"consolidados em 1 linha por CEP (mediana de lat/lng, moda de cidade/UF)"
+products,Colunas com erro de grafia (lenght),2,renomeadas para length
+products,Linhas totalmente duplicadas,0,removidas
+products,Chave duplicada (product_id),0,mantido o primeiro registro
+products,Chave nula (product_id),0,removidas
+products,Produtos sem categoria,610,preenchidos com 'sem_categoria'
+products,Categorias sem tradução para inglês,0,mantido o nome original
+products,product_weight_g <= 0,4,convertido para nulo
+products,product_length_cm <= 0,0,convertido para nulo
+products,product_height_cm <= 0,0,convertido para nulo
+products,product_width_cm <= 0,0,convertido para nulo
+orders,Linhas totalmente duplicadas,0,removidas
+orders,Chave duplicada (order_id),0,mantido o primeiro registro
+orders,"Chave nula (order_id, customer_id)",0,removidas
+orders,Status de pedido desconhecido,0,removidos
+orders,Datas não interpretáveis em order_purchase_timestamp,0,convertidas para nulo
+orders,Datas não interpretáveis em order_approved_at,0,convertidas para nulo
+orders,Datas não interpretáveis em order_delivered_carrier_date,0,convertidas para nulo
+orders,Datas não interpretáveis em order_delivered_customer_date,0,convertidas para nulo
+orders,Datas não interpretáveis em order_estimated_delivery_date,0,convertidas para nulo
+orders,Chave nula (order_purchase_timestamp),0,removidas
+orders,Status 'delivered' sem data de entrega,8,mantidos; ficam fora das métricas de prazo
+orders,Pedidos não entregues com data de entrega preenchida,6,mantidos; métricas de prazo consideram só status 'delivered'
+orders,Aprovação anterior à compra,0,data convertida para nulo
+orders,Postagem à transportadora anterior à compra,166,data convertida para nulo
+orders,Entrega ao cliente anterior à compra,0,data convertida para nulo
+orders,Entrega ao cliente anterior à postagem na transportadora,23,apenas sinalizado em possui_inconsistencia_data
+order_items,Linhas totalmente duplicadas,0,removidas
+order_items,"Chave duplicada (order_id, order_item_id)",0,mantido o primeiro registro
+order_items,"Chave nula (order_id, order_item_id, product_id, seller_id)",0,removidas
+order_items,Datas não interpretáveis em shipping_limit_date,0,convertidas para nulo
+order_items,Preço nulo ou <= 0,0,removidos
+order_items,Frete nulo ou negativo,0,convertido para 0
+order_payments,Linhas totalmente duplicadas,0,removidas
+order_payments,"Chave duplicada (order_id, payment_sequential)",0,mantido o primeiro registro
+order_payments,"Chave nula (order_id, payment_sequential)",0,removidas
+order_payments,"Pagamento 'not_defined', nulo ou negativo",3,removidos
+order_payments,Parcelas < 1,2,ajustadas para 1 (pagamento à vista)
+order_reviews,Datas não interpretáveis em review_creation_date,0,convertidas para nulo
+order_reviews,Datas não interpretáveis em review_answer_timestamp,0,convertidas para nulo
+order_reviews,Linhas totalmente duplicadas,0,removidas
+order_reviews,"Chave duplicada (review_id, order_id)",0,mantido o registro mais recente
+order_reviews,"Chave nula (review_id, order_id)",0,removidas
+order_reviews,Nota fora da faixa 1-5,0,removidas
+orders,customer_id sem correspondência em customers,0,removidas
+order_items,order_id sem correspondência em orders,0,removidas
+order_items,product_id sem correspondência em products,0,removidas
+order_items,seller_id sem correspondência em sellers,0,removidas
+order_payments,order_id sem correspondência em orders,0,removidas
+order_reviews,order_id sem correspondência em orders,0,removidas
+orders,Pedidos sem nenhum item,775,mantidos (em geral cancelados/indisponíveis); filtre por status nas análises

@@ -1,0 +1,367 @@
+// =====================================================================
+// PROJETO OLIST - COLUNAS CALCULADAS E MEDIDAS DAX (PT-BR)
+// Tabelas importadas do PostgreSQL (schema olist):
+//   vw_fato_itens  -> 1 linha por ITEM vendido
+//   vw_pedidos     -> 1 linha por PEDIDO
+//   dim_calendario -> tabela de datas (marcar como tabela de datas)
+//
+// COMO USAR
+//  1) Colunas calculadas: Modelagem > Nova coluna, com a tabela certa selecionada.
+//  2) Medidas: crie uma tabela vazia "_Medidas" (Inserir > Inserir dados)
+//     e use Modelagem > Nova medida para cada bloco abaixo.
+//  3) Cada bloco indica entre [colchetes] o formato recomendado.
+// =====================================================================
+
+
+// =====================================================================
+// PARTE 1 - COLUNAS CALCULADAS
+// =====================================================================
+
+// ---------- Tabela: vw_fato_itens ----------
+
+// Categoria legível: "cama_mesa_banho" -> "Cama mesa banho"
+Categoria =
+VAR _nome = SUBSTITUTE ( vw_fato_itens[product_category_name], "_", " " )
+RETURN UPPER ( LEFT ( _nome, 1 ) ) & MID ( _nome, 2, 100 )
+
+Estado =
+SWITCH (
+    vw_fato_itens[customer_state],
+    "AC", "Acre", "AL", "Alagoas", "AP", "Amapá", "AM", "Amazonas", "BA", "Bahia",
+    "CE", "Ceará", "DF", "Distrito Federal", "ES", "Espírito Santo", "GO", "Goiás",
+    "MA", "Maranhão", "MT", "Mato Grosso", "MS", "Mato Grosso do Sul", "MG", "Minas Gerais",
+    "PA", "Pará", "PB", "Paraíba", "PR", "Paraná", "PE", "Pernambuco", "PI", "Piauí",
+    "RJ", "Rio de Janeiro", "RN", "Rio Grande do Norte", "RS", "Rio Grande do Sul",
+    "RO", "Rondônia", "RR", "Roraima", "SC", "Santa Catarina", "SP", "São Paulo",
+    "SE", "Sergipe", "TO", "Tocantins",
+    "Não informado"
+)
+
+Região =
+SWITCH (
+    TRUE (),
+    vw_fato_itens[customer_state] IN { "AC", "AP", "AM", "PA", "RO", "RR", "TO" }, "Norte",
+    vw_fato_itens[customer_state] IN { "AL", "BA", "CE", "MA", "PB", "PE", "PI", "RN", "SE" }, "Nordeste",
+    vw_fato_itens[customer_state] IN { "DF", "GO", "MT", "MS" }, "Centro-Oeste",
+    vw_fato_itens[customer_state] IN { "ES", "MG", "RJ", "SP" }, "Sudeste",
+    vw_fato_itens[customer_state] IN { "PR", "RS", "SC" }, "Sul",
+    "Não informado"
+)
+
+Status do Pedido =
+SWITCH (
+    vw_fato_itens[order_status],
+    "delivered", "Entregue", "shipped", "Enviado", "canceled", "Cancelado",
+    "unavailable", "Indisponível", "invoiced", "Faturado", "processing", "Em processamento",
+    "created", "Criado", "approved", "Aprovado",
+    vw_fato_itens[order_status]
+)
+
+
+// ---------- Tabela: vw_pedidos ----------
+
+Estado =
+SWITCH (
+    vw_pedidos[customer_state],
+    "AC", "Acre", "AL", "Alagoas", "AP", "Amapá", "AM", "Amazonas", "BA", "Bahia",
+    "CE", "Ceará", "DF", "Distrito Federal", "ES", "Espírito Santo", "GO", "Goiás",
+    "MA", "Maranhão", "MT", "Mato Grosso", "MS", "Mato Grosso do Sul", "MG", "Minas Gerais",
+    "PA", "Pará", "PB", "Paraíba", "PR", "Paraná", "PE", "Pernambuco", "PI", "Piauí",
+    "RJ", "Rio de Janeiro", "RN", "Rio Grande do Norte", "RS", "Rio Grande do Sul",
+    "RO", "Rondônia", "RR", "Roraima", "SC", "Santa Catarina", "SP", "São Paulo",
+    "SE", "Sergipe", "TO", "Tocantins",
+    "Não informado"
+)
+
+Região =
+SWITCH (
+    TRUE (),
+    vw_pedidos[customer_state] IN { "AC", "AP", "AM", "PA", "RO", "RR", "TO" }, "Norte",
+    vw_pedidos[customer_state] IN { "AL", "BA", "CE", "MA", "PB", "PE", "PI", "RN", "SE" }, "Nordeste",
+    vw_pedidos[customer_state] IN { "DF", "GO", "MT", "MS" }, "Centro-Oeste",
+    vw_pedidos[customer_state] IN { "ES", "MG", "RJ", "SP" }, "Sudeste",
+    vw_pedidos[customer_state] IN { "PR", "RS", "SC" }, "Sul",
+    "Não informado"
+)
+
+Status do Pedido =
+SWITCH (
+    vw_pedidos[order_status],
+    "delivered", "Entregue", "shipped", "Enviado", "canceled", "Cancelado",
+    "unavailable", "Indisponível", "invoiced", "Faturado", "processing", "Em processamento",
+    "created", "Criado", "approved", "Aprovado",
+    vw_pedidos[order_status]
+)
+
+Forma de Pagamento =
+SWITCH (
+    vw_pedidos[forma_pagamento_principal],
+    "credit_card", "Cartão de crédito",
+    "boleto", "Boleto",
+    "debit_card", "Cartão de débito",
+    "voucher", "Voucher",
+    "Não informado"
+)
+
+// Faixas para o gráfico "nota x atraso"
+Faixa de Atraso =
+SWITCH (
+    TRUE (),
+    ISBLANK ( vw_pedidos[dias_atraso] ), "Sem data de entrega",
+    vw_pedidos[dias_atraso] <= 0, "No prazo",
+    vw_pedidos[dias_atraso] <= 3, "1 a 3 dias",
+    vw_pedidos[dias_atraso] <= 7, "4 a 7 dias",
+    vw_pedidos[dias_atraso] <= 15, "8 a 15 dias",
+    "Mais de 15 dias"
+)
+
+// Use para ordenar "Faixa de Atraso" (Ordenar por coluna)
+Ordem Faixa de Atraso =
+SWITCH (
+    TRUE (),
+    ISBLANK ( vw_pedidos[dias_atraso] ), 0,
+    vw_pedidos[dias_atraso] <= 0, 1,
+    vw_pedidos[dias_atraso] <= 3, 2,
+    vw_pedidos[dias_atraso] <= 7, 3,
+    vw_pedidos[dias_atraso] <= 15, 4,
+    5
+)
+
+Nota Arredondada = ROUND ( vw_pedidos[nota_media], 0 )
+
+
+// =====================================================================
+// PARTE 2 - MEDIDAS
+// Regra: receita e pedidos desconsideram "canceled" e "unavailable".
+// =====================================================================
+
+// ---------- VENDAS ----------
+
+// [Moeda R$, 0 casas]
+Receita =
+CALCULATE (
+    SUM ( vw_fato_itens[price] ),
+    vw_fato_itens[order_status] <> "canceled",
+    vw_fato_itens[order_status] <> "unavailable"
+)
+
+// [Moeda R$] - usada para reconciliar com o SQL (inclui todos os status)
+Receita Bruta (todos os status) = SUM ( vw_fato_itens[price] )
+
+// [Moeda R$]
+Frete Total =
+CALCULATE (
+    SUM ( vw_fato_itens[freight_value] ),
+    vw_fato_itens[order_status] <> "canceled",
+    vw_fato_itens[order_status] <> "unavailable"
+)
+
+// [Moeda R$]
+Receita com Frete = [Receita] + [Frete Total]
+
+// [Número inteiro]
+Pedidos =
+CALCULATE (
+    DISTINCTCOUNT ( vw_fato_itens[order_id] ),
+    vw_fato_itens[order_status] <> "canceled",
+    vw_fato_itens[order_status] <> "unavailable"
+)
+
+// [Número inteiro]
+Itens Vendidos =
+CALCULATE (
+    COUNTROWS ( vw_fato_itens ),
+    vw_fato_itens[order_status] <> "canceled",
+    vw_fato_itens[order_status] <> "unavailable"
+)
+
+// [Moeda R$, 2 casas]
+Ticket Médio = DIVIDE ( [Receita], [Pedidos] )
+
+// [Moeda R$, 2 casas]
+Preço Médio por Item = DIVIDE ( [Receita], [Itens Vendidos] )
+
+// [Porcentagem, 1 casa]
+% Frete sobre Receita = DIVIDE ( [Frete Total], [Receita] )
+
+// [Porcentagem, 1 casa]
+Participação na Receita % =
+DIVIDE ( [Receita], CALCULATE ( [Receita], ALLSELECTED () ) )
+
+// Comparações no tempo (exigem dim_calendario marcada como tabela de datas)
+// [Moeda R$]
+Receita Ano Anterior =
+CALCULATE ( [Receita], SAMEPERIODLASTYEAR ( dim_calendario[data] ) )
+
+// [Porcentagem, 1 casa]
+Crescimento Receita % (Ano) =
+DIVIDE ( [Receita] - [Receita Ano Anterior], [Receita Ano Anterior] )
+
+// [Moeda R$]
+Receita Mês Anterior =
+CALCULATE ( [Receita], DATEADD ( dim_calendario[data], -1, MONTH ) )
+
+// [Porcentagem, 1 casa]
+Crescimento Receita % (Mês) =
+DIVIDE ( [Receita] - [Receita Mês Anterior], [Receita Mês Anterior] )
+
+// [Moeda R$]
+Receita Acumulada no Ano =
+TOTALYTD ( [Receita], dim_calendario[data] )
+
+
+// ---------- CLIENTES ----------
+
+// [Número inteiro]
+Clientes Únicos = DISTINCTCOUNT ( vw_pedidos[customer_unique_id] )
+
+// Clientes com mais de 1 pedido (pode levar alguns segundos: ~96 mil clientes)
+// [Número inteiro]
+Clientes Recorrentes =
+COUNTROWS (
+    FILTER (
+        VALUES ( vw_pedidos[customer_unique_id] ),
+        CALCULATE ( DISTINCTCOUNT ( vw_pedidos[order_id] ) ) > 1
+    )
+)
+
+// [Porcentagem, 1 casa]
+Taxa de Recompra % = DIVIDE ( [Clientes Recorrentes], [Clientes Únicos] )
+
+// [Moeda R$]
+Receita por Cliente = DIVIDE ( [Receita], [Clientes Únicos] )
+
+
+// ---------- LOGÍSTICA ----------
+
+// [Número inteiro]
+Pedidos Atrasados =
+CALCULATE ( COUNTROWS ( vw_pedidos ), vw_pedidos[entregue_com_atraso] = TRUE () )
+
+// [Número inteiro]
+Pedidos no Prazo =
+CALCULATE ( COUNTROWS ( vw_pedidos ), vw_pedidos[entregue_com_atraso] = FALSE () )
+
+// [Porcentagem, 1 casa]
+% Atraso = DIVIDE ( [Pedidos Atrasados], [Pedidos Atrasados] + [Pedidos no Prazo] )
+
+// [Decimal, 1 casa] - já considera só pedidos "delivered" com data válida
+Prazo Médio de Entrega (dias) = AVERAGE ( vw_pedidos[dias_entrega_real] )
+
+// [Decimal, 1 casa]
+Prazo Estimado Médio (dias) =
+CALCULATE (
+    AVERAGE ( vw_pedidos[dias_entrega_estimada] ),
+    vw_pedidos[order_status] = "delivered"
+)
+
+// [Decimal, 1 casa] - atraso médio considerando só os pedidos atrasados
+Atraso Médio (dias) =
+CALCULATE ( AVERAGE ( vw_pedidos[dias_atraso] ), vw_pedidos[entregue_com_atraso] = TRUE () )
+
+// [Decimal, 1 casa] - positivo = entrega mais rápida que o estimado
+Folga Média sobre o Estimado (dias) = [Prazo Estimado Médio (dias)] - [Prazo Médio de Entrega (dias)]
+
+
+// ---------- SATISFAÇÃO ----------
+
+// [Decimal, 2 casas]
+Nota Média = AVERAGE ( vw_pedidos[nota_media] )
+
+// [Decimal, 2 casas]
+Nota Média (no prazo) =
+CALCULATE ( [Nota Média], vw_pedidos[entregue_com_atraso] = FALSE () )
+
+// [Decimal, 2 casas]
+Nota Média (atrasados) =
+CALCULATE ( [Nota Média], vw_pedidos[entregue_com_atraso] = TRUE () )
+
+// [Decimal, 2 casas] - quanto o atraso derruba a nota
+Queda de Nota por Atraso = [Nota Média (atrasados)] - [Nota Média (no prazo)]
+
+// [Porcentagem, 1 casa] - notas 1 e 2
+% Avaliações Negativas =
+DIVIDE (
+    CALCULATE ( COUNTROWS ( vw_pedidos ), vw_pedidos[nota_media] <= 2 ),
+    CALCULATE ( COUNTROWS ( vw_pedidos ), vw_pedidos[nota_media] >= 1 )
+)
+
+// [Número inteiro]
+Pedidos Avaliados =
+CALCULATE ( COUNTROWS ( vw_pedidos ), vw_pedidos[nota_media] >= 1 )
+
+
+// ---------- PAGAMENTOS ----------
+
+// [Número inteiro]
+Pedidos (Pagamentos) = DISTINCTCOUNT ( vw_pedidos[order_id] )
+
+// [Porcentagem, 1 casa]
+% do Total de Pedidos = DIVIDE ( [Pedidos (Pagamentos)], CALCULATE ( [Pedidos (Pagamentos)], ALLSELECTED () ) )
+
+// [Decimal, 1 casa]
+Parcelas Médias (cartão de crédito) =
+CALCULATE (
+    AVERAGE ( vw_pedidos[parcelas_max] ),
+    vw_pedidos[forma_pagamento_principal] = "credit_card"
+)
+
+// [Moeda R$, 2 casas]
+Valor Pago Médio por Pedido = AVERAGE ( vw_pedidos[valor_pago] )
+
+
+// ---------- VENDEDORES ----------
+
+// [Número inteiro]
+Vendedores Ativos =
+CALCULATE (
+    DISTINCTCOUNT ( vw_fato_itens[seller_id] ),
+    vw_fato_itens[order_status] <> "canceled",
+    vw_fato_itens[order_status] <> "unavailable"
+)
+
+// [Moeda R$]
+Receita por Vendedor = DIVIDE ( [Receita], [Vendedores Ativos] )
+
+// [Porcentagem, 1 casa] - linha do gráfico de Pareto
+// Eixo do gráfico: vw_fato_itens[seller_id], ordenado por [Receita] decrescente
+Receita Acumulada % (Pareto) =
+VAR _receitaAtual = [Receita]
+VAR _tabela =
+    ADDCOLUMNS ( ALLSELECTED ( vw_fato_itens[seller_id] ), "@ReceitaVend", [Receita] )
+VAR _acumulado =
+    SUMX ( FILTER ( _tabela, [@ReceitaVend] >= _receitaAtual ), [@ReceitaVend] )
+VAR _total = SUMX ( _tabela, [@ReceitaVend] )
+RETURN
+    DIVIDE ( _acumulado, _total )
+
+// [Porcentagem, 1 casa] - atraso na visão por item (para ranking de vendedores)
+% Atraso (itens) =
+DIVIDE (
+    CALCULATE ( COUNTROWS ( vw_fato_itens ), vw_fato_itens[entregue_com_atraso] = TRUE () ),
+    CALCULATE ( COUNTROWS ( vw_fato_itens ), vw_fato_itens[entregue_com_atraso] = TRUE () )
+        + CALCULATE ( COUNTROWS ( vw_fato_itens ), vw_fato_itens[entregue_com_atraso] = FALSE () )
+)
+
+// [Decimal, 2 casas]
+Nota Média (itens) = AVERAGE ( vw_fato_itens[review_score] )
+
+
+// ---------- TEXTOS DINÂMICOS (para títulos e caixas de insight) ----------
+
+Período Selecionado =
+FORMAT ( MIN ( vw_fato_itens[data_compra] ), "mmm/yyyy", "pt-BR" )
+    & " a "
+    & FORMAT ( MAX ( vw_fato_itens[data_compra] ), "mmm/yyyy", "pt-BR" )
+
+Insight Atraso e Nota =
+"Pedidos atrasados recebem nota "
+    & FORMAT ( [Nota Média (atrasados)], "0.0", "pt-BR" )
+    & ", contra "
+    & FORMAT ( [Nota Média (no prazo)], "0.0", "pt-BR" )
+    & " dos entregues no prazo."
+
+Insight Recompra =
+"Apenas "
+    & FORMAT ( [Taxa de Recompra %], "0.0%", "pt-BR" )
+    & " dos clientes compraram mais de uma vez."
