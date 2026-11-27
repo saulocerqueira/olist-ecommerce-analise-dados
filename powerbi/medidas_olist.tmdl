@@ -1,0 +1,239 @@
+	measure 'Receita' =
+			CALCULATE (
+			    SUM ( vw_fato_itens[price] ),
+			    vw_fato_itens[order_status] <> "canceled",
+			    vw_fato_itens[order_status] <> "unavailable"
+			)
+		formatString: \R\$\ #,0
+		displayFolder: Vendas
+
+	measure 'Receita Bruta (todos os status)' = SUM ( vw_fato_itens[price] )
+		formatString: \R\$\ #,0.00
+		displayFolder: Vendas
+
+	measure 'Frete Total' =
+			CALCULATE (
+			    SUM ( vw_fato_itens[freight_value] ),
+			    vw_fato_itens[order_status] <> "canceled",
+			    vw_fato_itens[order_status] <> "unavailable"
+			)
+		formatString: \R\$\ #,0.00
+		displayFolder: Vendas
+
+	measure 'Receita com Frete' = [Receita] + [Frete Total]
+		formatString: \R\$\ #,0.00
+		displayFolder: Vendas
+
+	measure 'Pedidos' =
+			CALCULATE (
+			    DISTINCTCOUNT ( vw_fato_itens[order_id] ),
+			    vw_fato_itens[order_status] <> "canceled",
+			    vw_fato_itens[order_status] <> "unavailable"
+			)
+		formatString: #,0
+		displayFolder: Vendas
+
+	measure 'Itens Vendidos' =
+			CALCULATE (
+			    COUNTROWS ( vw_fato_itens ),
+			    vw_fato_itens[order_status] <> "canceled",
+			    vw_fato_itens[order_status] <> "unavailable"
+			)
+		formatString: #,0
+		displayFolder: Vendas
+
+	measure 'Ticket Médio' = DIVIDE ( [Receita], [Pedidos] )
+		formatString: \R\$\ #,0.00
+		displayFolder: Vendas
+
+	measure 'Preço Médio por Item' = DIVIDE ( [Receita], [Itens Vendidos] )
+		formatString: \R\$\ #,0.00
+		displayFolder: Vendas
+
+	measure '% Frete sobre Receita' = DIVIDE ( [Frete Total], [Receita] )
+		formatString: 0.0%
+		displayFolder: Vendas
+
+	measure 'Participação na Receita %' = DIVIDE ( [Receita], CALCULATE ( [Receita], ALLSELECTED () ) )
+		formatString: 0.0%
+		displayFolder: Vendas
+
+	measure 'Receita Ano Anterior' = CALCULATE ( [Receita], SAMEPERIODLASTYEAR ( dim_calendario[data] ) )
+		formatString: \R\$\ #,0.00
+		displayFolder: Vendas
+
+	measure 'Crescimento Receita % (Ano)' = DIVIDE ( [Receita] - [Receita Ano Anterior], [Receita Ano Anterior] )
+		formatString: 0.0%
+		displayFolder: Vendas
+
+	measure 'Receita Mês Anterior' = CALCULATE ( [Receita], DATEADD ( dim_calendario[data], -1, MONTH ) )
+		formatString: \R\$\ #,0.00
+		displayFolder: Vendas
+
+	measure 'Crescimento Receita % (Mês)' = DIVIDE ( [Receita] - [Receita Mês Anterior], [Receita Mês Anterior] )
+		formatString: 0.0%
+		displayFolder: Vendas
+
+	measure 'Receita Acumulada no Ano' = TOTALYTD ( [Receita], dim_calendario[data] )
+		formatString: \R\$\ #,0.00
+		displayFolder: Vendas
+
+	measure 'Clientes Únicos' = DISTINCTCOUNT ( vw_pedidos[customer_unique_id] )
+		formatString: #,0
+		displayFolder: Clientes
+
+	measure 'Clientes Recorrentes' =
+			COUNTROWS (
+			    FILTER (
+			        VALUES ( vw_pedidos[customer_unique_id] ),
+			        CALCULATE ( DISTINCTCOUNT ( vw_pedidos[order_id] ) ) > 1
+			    )
+			)
+		formatString: #,0
+		displayFolder: Clientes
+
+	measure 'Taxa de Recompra %' = DIVIDE ( [Clientes Recorrentes], [Clientes Únicos] )
+		formatString: 0.0%
+		displayFolder: Clientes
+
+	measure 'Receita por Cliente' = DIVIDE ( [Receita], [Clientes Únicos] )
+		formatString: \R\$\ #,0.00
+		displayFolder: Clientes
+
+	measure 'Pedidos Atrasados' = CALCULATE ( COUNTROWS ( vw_pedidos ), vw_pedidos[entregue_com_atraso] = TRUE () )
+		formatString: #,0
+		displayFolder: Logística
+
+	measure 'Pedidos no Prazo' = CALCULATE ( COUNTROWS ( vw_pedidos ), vw_pedidos[entregue_com_atraso] = FALSE () )
+		formatString: #,0
+		displayFolder: Logística
+
+	measure '% Atraso' = DIVIDE ( [Pedidos Atrasados], [Pedidos Atrasados] + [Pedidos no Prazo] )
+		formatString: 0.0%
+		displayFolder: Logística
+
+	measure 'Prazo Médio de Entrega (dias)' = AVERAGE ( vw_pedidos[dias_entrega_real] )
+		formatString: 0.0
+		displayFolder: Logística
+
+	measure 'Prazo Estimado Médio (dias)' =
+			CALCULATE (
+			    AVERAGE ( vw_pedidos[dias_entrega_estimada] ),
+			    vw_pedidos[order_status] = "delivered"
+			)
+		formatString: 0.0
+		displayFolder: Logística
+
+	measure 'Atraso Médio (dias)' = CALCULATE ( AVERAGE ( vw_pedidos[dias_atraso] ), vw_pedidos[entregue_com_atraso] = TRUE () )
+		formatString: 0.0
+		displayFolder: Logística
+
+	measure 'Folga Média sobre o Estimado (dias)' = [Prazo Estimado Médio (dias)] - [Prazo Médio de Entrega (dias)]
+		formatString: 0.0
+		displayFolder: Logística
+
+	measure 'Nota Média' = AVERAGE ( vw_pedidos[nota_media] )
+		formatString: 0.00
+		displayFolder: Satisfação
+
+	measure 'Nota Média (no prazo)' = CALCULATE ( [Nota Média], vw_pedidos[entregue_com_atraso] = FALSE () )
+		formatString: 0.00
+		displayFolder: Satisfação
+
+	measure 'Nota Média (atrasados)' = CALCULATE ( [Nota Média], vw_pedidos[entregue_com_atraso] = TRUE () )
+		formatString: 0.00
+		displayFolder: Satisfação
+
+	measure 'Queda de Nota por Atraso' = [Nota Média (atrasados)] - [Nota Média (no prazo)]
+		formatString: 0.00
+		displayFolder: Satisfação
+
+	measure '% Avaliações Negativas' =
+			DIVIDE (
+			    CALCULATE ( COUNTROWS ( vw_pedidos ), vw_pedidos[nota_media] <= 2 ),
+			    CALCULATE ( COUNTROWS ( vw_pedidos ), vw_pedidos[nota_media] >= 1 )
+			)
+		formatString: 0.0%
+		displayFolder: Satisfação
+
+	measure 'Pedidos Avaliados' = CALCULATE ( COUNTROWS ( vw_pedidos ), vw_pedidos[nota_media] >= 1 )
+		formatString: #,0
+		displayFolder: Satisfação
+
+	measure 'Pedidos (Pagamentos)' = DISTINCTCOUNT ( vw_pedidos[order_id] )
+		formatString: #,0
+		displayFolder: Pagamentos
+
+	measure '% do Total de Pedidos' = DIVIDE ( [Pedidos (Pagamentos)], CALCULATE ( [Pedidos (Pagamentos)], ALLSELECTED () ) )
+		formatString: 0.0%
+		displayFolder: Pagamentos
+
+	measure 'Parcelas Médias (cartão de crédito)' =
+			CALCULATE (
+			    AVERAGE ( vw_pedidos[parcelas_max] ),
+			    vw_pedidos[forma_pagamento_principal] = "credit_card"
+			)
+		formatString: 0.0
+		displayFolder: Pagamentos
+
+	measure 'Valor Pago Médio por Pedido' = AVERAGE ( vw_pedidos[valor_pago] )
+		formatString: \R\$\ #,0.00
+		displayFolder: Pagamentos
+
+	measure 'Vendedores Ativos' =
+			CALCULATE (
+			    DISTINCTCOUNT ( vw_fato_itens[seller_id] ),
+			    vw_fato_itens[order_status] <> "canceled",
+			    vw_fato_itens[order_status] <> "unavailable"
+			)
+		formatString: #,0
+		displayFolder: Vendedores
+
+	measure 'Receita por Vendedor' = DIVIDE ( [Receita], [Vendedores Ativos] )
+		formatString: \R\$\ #,0.00
+		displayFolder: Vendedores
+
+	measure 'Receita Acumulada % (Pareto)' =
+			VAR _receitaAtual = [Receita]
+			VAR _tabela =
+			    ADDCOLUMNS ( ALLSELECTED ( vw_fato_itens[seller_id] ), "@ReceitaVend", [Receita] )
+			VAR _acumulado =
+			    SUMX ( FILTER ( _tabela, [@ReceitaVend] >= _receitaAtual ), [@ReceitaVend] )
+			VAR _total = SUMX ( _tabela, [@ReceitaVend] )
+			RETURN
+			    DIVIDE ( _acumulado, _total )
+		formatString: 0.0%
+		displayFolder: Vendedores
+
+	measure '% Atraso (itens)' =
+			DIVIDE (
+			    CALCULATE ( COUNTROWS ( vw_fato_itens ), vw_fato_itens[entregue_com_atraso] = TRUE () ),
+			    CALCULATE ( COUNTROWS ( vw_fato_itens ), vw_fato_itens[entregue_com_atraso] = TRUE () )
+			        + CALCULATE ( COUNTROWS ( vw_fato_itens ), vw_fato_itens[entregue_com_atraso] = FALSE () )
+			)
+		formatString: 0.0%
+		displayFolder: Vendedores
+
+	measure 'Nota Média (itens)' = AVERAGE ( vw_fato_itens[review_score] )
+		formatString: 0.00
+		displayFolder: Vendedores
+
+	measure 'Período Selecionado' =
+			FORMAT ( MIN ( vw_fato_itens[data_compra] ), "mmm/yyyy", "pt-BR" )
+			    & " a "
+			    & FORMAT ( MAX ( vw_fato_itens[data_compra] ), "mmm/yyyy", "pt-BR" )
+		displayFolder: Textos dinâmicos
+
+	measure 'Insight Atraso e Nota' =
+			"Pedidos atrasados recebem nota "
+			    & FORMAT ( [Nota Média (atrasados)], "0.0", "pt-BR" )
+			    & ", contra "
+			    & FORMAT ( [Nota Média (no prazo)], "0.0", "pt-BR" )
+			    & " dos entregues no prazo."
+		displayFolder: Textos dinâmicos
+
+	measure 'Insight Recompra' =
+			"Apenas "
+			    & FORMAT ( [Taxa de Recompra %], "0.0%", "pt-BR" )
+			    & " dos clientes compraram mais de uma vez."
+		displayFolder: Textos dinâmicos
