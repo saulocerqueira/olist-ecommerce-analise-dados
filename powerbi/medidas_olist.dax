@@ -323,8 +323,7 @@ CALCULATE (
 // [Moeda R$]
 Receita por Vendedor = DIVIDE ( [Receita], [Vendedores Ativos] )
 
-// [Porcentagem, 1 casa] - linha do gráfico de Pareto
-// Eixo do gráfico: vw_fato_itens[seller_id], ordenado por [Receita] decrescente
+// [Porcentagem, 1 casa] - eixo Y da curva de Pareto (dispersão, detalhes = vw_fato_itens[seller_id])
 Receita Acumulada % (Pareto) =
 VAR _receitaAtual = [Receita]
 VAR _tabela =
@@ -334,6 +333,21 @@ VAR _acumulado =
 VAR _total = SUMX ( _tabela, [@ReceitaVend] )
 RETURN
     DIVIDE ( _acumulado, _total )
+
+// [Porcentagem, 1 casa] - eixo X da curva de Pareto: fatia acumulada de vendedores,
+// do maior para o menor em receita
+% Vendedores Acumulados =
+VAR _receitaAtual = [Receita]
+VAR _tabela =
+    FILTER (
+        ADDCOLUMNS ( ALLSELECTED ( vw_fato_itens[seller_id] ), "@ReceitaVend", [Receita] ),
+        NOT ISBLANK ( [@ReceitaVend] )
+    )
+RETURN
+    DIVIDE (
+        COUNTROWS ( FILTER ( _tabela, [@ReceitaVend] >= _receitaAtual ) ),
+        COUNTROWS ( _tabela )
+    )
 
 // [Porcentagem, 1 casa] - atraso na visão por item (para ranking de vendedores)
 % Atraso (itens) =

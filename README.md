@@ -2,7 +2,7 @@
 
 Projeto de análise de dados de ponta a ponta: **extração e limpeza com Python (Pandas) → armazenamento em PostgreSQL → dashboard em Power BI**.
 
-> **Status:** ETL e banco de dados concluídos ✅ · Dashboard em Power BI em desenvolvimento 🚧
+> **Status:** ETL e banco de dados concluídos ✅ · Modelo, medidas DAX e dashboard de 5 páginas com tema próprio ✅ · Prints, PDF e vídeo de apresentação 🚧
 
 ## 🎯 Objetivo
 
@@ -67,17 +67,65 @@ Schema `olist` no PostgreSQL, com 9 tabelas e 2 views pensadas para o Power BI:
 
 Separar as duas views evita duplicar valores ao cruzar itens com pagamentos.
 
-## 🔍 Primeiros achados (análise preliminar)
+No Power BI, as **45 medidas DAX** ficam organizadas em pastas (Vendas, Clientes, Logística, Satisfação, Pagamentos, Vendedores e Textos dinâmicos) na tabela `_Medidas`. Regra de negócio: **receita e pedidos desconsideram status `canceled` e `unavailable`**. O código completo está em [`powerbi/medidas_olist.dax`](powerbi/medidas_olist.dax) (colunas calculadas e medidas) e [`powerbi/medidas_olist.tmdl`](powerbi/medidas_olist.tmdl) (script para a visão TMDL).
 
-- 📈 O pico de vendas foi em **novembro de 2017**, com 7.544 pedidos (Black Friday).
-- 🚚 O prazo médio de entrega é de **12,6 dias**, com **6,8%** dos pedidos entregues com atraso.
-- ⭐ Pedidos no prazo têm nota média **4,29**; pedidos atrasados, **2,27**.
-- 🔁 Apenas **3,1%** dos clientes únicos compraram mais de uma vez.
-- 🏪 Os 20% maiores vendedores respondem por **82,7%** da receita.
+## 📊 Dashboard
+
+Relatório em [`powerbi/relatorio_olist.pbix`](powerbi/relatorio_olist.pbix), com 5 páginas (1920×1080), navegador de páginas no topo e filtros de **ano** e **trimestre** sincronizados entre todas as páginas. Cada página segue o mesmo layout: título, 6 KPIs e 4 a 5 visuais. Os gráficos mensais mostram jan/2017 a ago/2018, os meses com dados completos (2016 e set–out/2018 têm poucos pedidos).
+
+| Página | O que responde | Principais visuais |
+|---|---|---|
+| **1. Visão Executiva** | Como está o negócio como um todo? | KPIs (receita, pedidos, ticket médio, nota, % atraso, recompra), receita mensal vs. ano anterior, receita por estado e por região, participação das formas de pagamento |
+| **2. Vendas e Produtos** | O que vende e quanto o frete pesa? | Treemap de receita por categoria, itens vendidos por mês, peso do frete por estado, ranking de categorias |
+| **3. Clientes e Geografia** | De onde vêm os clientes e quantos voltam? | Clientes por estado, por região e por mês, ranking de cidades com taxa de recompra, texto de insight |
+| **4. Logística e Satisfação** | O atraso derruba a nota? | Nota média por faixa de atraso, prazo real vs. estimado por mês, prazo e % de atraso por estado, nota no prazo vs. atrasados |
+| **5. Pagamentos e Vendedores** | Como o cliente paga e quão concentrada é a receita? | Formas de pagamento, pedidos por número de parcelas, receita por estado do vendedor, curva de Pareto, ranking de vendedores |
+
+### 🎨 Tema
+
+Tema escuro próprio, **preto com vermelho em destaque**, em [`powerbi/tema_olist_dark_red.json`](powerbi/tema_olist_dark_red.json) (Exibição > Temas > Procurar temas). Já vem aplicado no `.pbix`.
+
+| Uso | Cor |
+|---|---|
+| Fundo da página | `#0A0A0B` |
+| Cartões e visuais | `#141416` (borda `#2A2A2E`) |
+| Destaque principal | `#E5383B` |
+| Variações de vermelho | `#FF6B6B` · `#A4161A` · `#660708` |
+| Texto | `#F5F5F5` (secundário `#B8B8C0`) |
+
+### 🖼️ Prints e PDF
+
+*Prints das páginas, PDF e vídeo de apresentação: em breve na pasta `docs/`.*
+
+Para gerar: abra o `.pbix` e use **Arquivo > Exportar > Exportar para PDF** (exporta as 5 páginas). Para os prints, recolha os painéis laterais, ajuste **Exibição > Ajustar à página** e capture cada página (Win + Shift + S), salvando em `docs/prints/`.
+
+## 🔍 Principais achados
+
+Valores calculados com a regra do dashboard (sem pedidos cancelados ou indisponíveis).
+
+**Vendas e produtos**
+- 💰 Receita de **R$ 13,49 milhões** em **98.199 pedidos**, com ticket médio de **R$ 137,42**.
+- 📈 O pico mensal foi **novembro de 2017**: 7.423 pedidos e R$ 1,00 milhão (Black Friday). Mesmo incompleto, 2018 (R$ 7,34 mi) já supera 2017 inteiro (R$ 6,11 mi).
+- 🛍️ As 3 maiores categorias, beleza e saúde (9,3%), relógios e presentes (8,9%) e cama, mesa e banho (7,7%), somam 25,9% da receita.
+- 🚛 O frete equivale a **16,6%** da receita. Pesa 28,5% em Roraima e 26,3% no Maranhão, contra 13,8% em São Paulo.
+
+**Clientes e geografia**
+- 🗺️ **São Paulo** responde por 38,3% da receita; com Rio e Minas, 63,4%. O Sudeste concentra 68,6% dos clientes únicos.
+- 🔁 Apenas **3,1%** dos clientes únicos (2.997 de 96.096) compraram mais de uma vez: o negócio vive de aquisição, não de recompra.
+
+**Logística e satisfação**
+- 🚚 Entrega média de **12,6 dias**, contra 23,7 estimados. **6,8%** dos pedidos chegam atrasados, em média 10,6 dias depois do prometido.
+- ⭐ Pedidos no prazo têm nota média **4,29**; atrasados, **2,27**. A nota cai de 3,29 (1 a 3 dias de atraso) para 2,11 (4 a 7 dias) e fica abaixo de 1,8 acima de 8 dias.
+- 🧭 A distância pesa: a entrega leva 8,8 dias em SP e passa de 26 dias em RR, AP e AM.
+- 🛋️ Entre as categorias com ao menos 500 pedidos, a pior nota é de móveis de escritório (3,49).
+
+**Pagamentos e vendedores**
+- 💳 **75,4%** dos pedidos são pagos com cartão de crédito e **19,9%** com boleto. No cartão, a média é de 3,6 parcelas e 68% dos pedidos são parcelados.
+- 🏪 Dos 3.053 vendedores ativos, os **20% maiores respondem por 82,6%** da receita e os 30 maiores (1%), por 25,8%. Vendedores de SP geram 64,4% da receita.
 
 ## ▶️ Como executar
 
-**Pré-requisitos:** Python 3.10+, PostgreSQL instalado e em execução.
+**Pré-requisitos:** Python 3.10+, PostgreSQL instalado e em execução e Power BI Desktop (versão mais recente).
 
 ```bash
 # 1. Clone o repositório
@@ -97,21 +145,21 @@ python etl_olist.py --projeto .
 Para rodar só a limpeza, sem banco: `python etl_olist.py --projeto . --skip-db`.
 A senha também pode ser definida na variável de ambiente `PGPASSWORD`.
 
+Para abrir o dashboard, execute o ETL, abra `powerbi/relatorio_olist.pbix` e, se necessário, ajuste a conexão em Transformar dados > Configurações da fonte de dados (servidor, banco `olist`, schema `olist`).
+
 ## 📁 Estrutura do repositório
 
 ```
-├── etl_olist.py              # pipeline de ETL (extração, limpeza e carga)
+├── etl_olist.py                       # pipeline de ETL (extração, limpeza e carga)
 ├── requirements.txt
-├── reports/                  # relatórios de qualidade dos dados
+├── reports/                           # relatórios de qualidade dos dados
 ├── powerbi/
-│   ├── tema_olist_dark_red.json   # tema do dashboard
-│   └── medidas_olist.dax          # colunas calculadas e medidas DAX
-└── docs/                     # imagens e documentação
+│   ├── relatorio_olist.pbix           # dashboard com 5 páginas
+│   ├── tema_olist_dark_red.json       # tema preto e vermelho
+│   ├── medidas_olist.dax              # colunas calculadas e medidas DAX
+│   └── medidas_olist.tmdl             # medidas em TMDL
+└── docs/                              # prints, PDF e vídeo do dashboard
 ```
-
-## 📊 Dashboard
-
-*Em desenvolvimento. Em breve: prints das páginas e arquivo `.pbix`.*
 
 ## 📄 Dados e licença
 
