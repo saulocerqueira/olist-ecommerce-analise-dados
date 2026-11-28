@@ -2,7 +2,7 @@
 
 Projeto de análise de dados de ponta a ponta: **extração e limpeza com Python (Pandas) → armazenamento em PostgreSQL → dashboard em Power BI**.
 
-> **Status:** ETL e banco de dados concluídos ✅ · Modelo, medidas DAX e dashboard de 5 páginas com tema próprio ✅ · Prints e PDF ✅ · Vídeo de apresentação 🚧
+> **Status:** ETL e banco de dados concluídos ✅ · Modelo, medidas DAX e dashboard de 5 páginas com tema próprio ✅ · Prints e PDF ✅
 
 ## 🎯 Objetivo
 
@@ -125,8 +125,6 @@ Os filtros de **ano** e **trimestre** ficam sincronizados: o que é escolhido nu
 | ![Selecionando o trimestre](docs/prints/09_filtro_2018_t2_selecionando_trimestre.png) | ![Logística em 2018 T2](docs/prints/10_filtro_2018_t2_logistica_e_satisfacao.png) |
 
 Outros prints filtrados: [Vendas e Produtos em 2017](docs/prints/08_filtro_ano_2017_vendas_e_produtos.png) · [Pagamentos e Vendedores em 2018 T2](docs/prints/11_filtro_2018_t2_pagamentos_e_vendedores.png).
-
-*Vídeo de apresentação: em breve.*
 
 ## 🔍 Principais achados
 
