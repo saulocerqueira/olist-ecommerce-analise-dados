@@ -2,7 +2,7 @@
 
 Projeto de análise de dados de ponta a ponta: **extração e limpeza com Python (Pandas) → armazenamento em PostgreSQL → dashboard em Power BI**.
 
-> **Status:** ETL e banco de dados concluídos ✅ · Modelo, medidas DAX e dashboard de 5 páginas com tema próprio ✅ · Prints, PDF e vídeo de apresentação 🚧
+> **Status:** ETL e banco de dados concluídos ✅ · Modelo, medidas DAX e dashboard de 5 páginas com tema próprio ✅ · Prints e PDF ✅ · Vídeo de apresentação 🚧
 
 ## 🎯 Objetivo
 
@@ -95,9 +95,38 @@ Tema escuro próprio, **preto com vermelho em destaque**, em [`powerbi/tema_olis
 
 ### 🖼️ Prints e PDF
 
-*Prints das páginas, PDF e vídeo de apresentação: em breve na pasta `docs/`.*
+📄 **Relatório completo em PDF:** [`docs/relatorio_olist.pdf`](docs/relatorio_olist.pdf)
 
-Para gerar: abra o `.pbix` e use **Arquivo > Exportar > Exportar para PDF** (exporta as 5 páginas). Para os prints, recolha os painéis laterais, ajuste **Exibição > Ajustar à página** e capture cada página (Win + Shift + S), salvando em `docs/prints/`.
+**1. Visão Executiva**
+![Visão Executiva](docs/prints/01_visao_executiva.png)
+
+**2. Vendas e Produtos**
+![Vendas e Produtos](docs/prints/02_vendas_e_produtos.png)
+
+**3. Clientes e Geografia**
+![Clientes e Geografia](docs/prints/03_clientes_e_geografia.png)
+
+**4. Logística e Satisfação**
+![Logística e Satisfação](docs/prints/04_logistica_e_satisfacao.png)
+
+**5. Pagamentos e Vendedores**
+![Pagamentos e Vendedores](docs/prints/05_pagamentos_e_vendedores.png)
+
+#### 🔎 Filtros em ação
+
+Os filtros de **ano** e **trimestre** ficam sincronizados: o que é escolhido numa página vale para todas.
+
+| Ano = 2017 (seleção) | Ano = 2017 (resultado) |
+|---|---|
+| ![Selecionando 2017](docs/prints/06_filtro_ano_selecionando_2017.png) | ![Visão Executiva em 2017](docs/prints/07_filtro_ano_2017_visao_executiva.png) |
+
+| 2018, 2º trimestre (seleção) | 2018, 2º trimestre (resultado) |
+|---|---|
+| ![Selecionando o trimestre](docs/prints/09_filtro_2018_t2_selecionando_trimestre.png) | ![Logística em 2018 T2](docs/prints/10_filtro_2018_t2_logistica_e_satisfacao.png) |
+
+Outros prints filtrados: [Vendas e Produtos em 2017](docs/prints/08_filtro_ano_2017_vendas_e_produtos.png) · [Pagamentos e Vendedores em 2018 T2](docs/prints/11_filtro_2018_t2_pagamentos_e_vendedores.png).
+
+*Vídeo de apresentação: em breve.*
 
 ## 🔍 Principais achados
 
@@ -158,7 +187,9 @@ Para abrir o dashboard, execute o ETL, abra `powerbi/relatorio_olist.pbix` e, se
 │   ├── tema_olist_dark_red.json       # tema preto e vermelho
 │   ├── medidas_olist.dax              # colunas calculadas e medidas DAX
 │   └── medidas_olist.tmdl             # medidas em TMDL
-└── docs/                              # prints, PDF e vídeo do dashboard
+└── docs/
+    ├── relatorio_olist.pdf            # dashboard exportado em PDF (5 páginas)
+    └── prints/                        # prints das páginas e dos filtros
 ```
 
 ## 📄 Dados e licença
